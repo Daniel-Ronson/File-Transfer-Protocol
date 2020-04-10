@@ -1,8 +1,15 @@
 #server code
 from socket import *
+import sys
 
-#the port on which to listen
-serverPort=12000
+#user supplied values, command line arguments
+try:
+    #the port on which to listen
+    serverPort=sys.argv[1]
+
+#default port number
+except:
+    serverPort = 12000
 
 #create a TCP socket
 serverSocket = socket(AF_INET,SOCK_STREAM)
@@ -12,14 +19,13 @@ serverSocket.bind(('',serverPort))
 
 #start listening for incoming connections
 serverSocket.listen(1)
-print("The server is ready to recieve")
+print("The server is ready to recieve on port number: " + str(serverPort) )
 
 #the buffer to store the recieved data
 data = ""
 
 #forever accept incoming connections
 while 1:
-# Accept a connection ; get client ’ s socket
     connectionSocket, addr = serverSocket.accept()
 
     #temporary buffer
