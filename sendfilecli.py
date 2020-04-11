@@ -66,7 +66,7 @@ while True:
 		
 		# Send the data!
 		while len(fileData) > numSent:
-			numSent += connSock.send(fileData[numSent])
+			numSent += connSock.send(fileData[numSent].encode())
 	
 	# The file has been read. We are done
 	else:

@@ -44,7 +44,7 @@ def recvAll(sock, numBytes):
             break
 
         # Add the received bytes to the buffer
-        recvBuff += tmpBuff
+        recvBuff += tmpBuff.decode()
 
     return recvBuff
 
