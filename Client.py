@@ -4,6 +4,7 @@ import sys
 try:
     serverName = sys.argv[1]
     serverPort = sys.argv[2]
+
 #default values
 except:
     serverName = "localhost"
@@ -13,23 +14,23 @@ clientSocket = socket(AF_INET,SOCK_STREAM)
 
 clientSocket.connect((serverName,serverPort))
 
-data = 'This is data from the client which is not very long and over 40 bytes'
+data = 'connected from client'
 
-def send_data():
+def connect_to_server():
     bytesSent = 0
     while bytesSent != len(data):
 
         bytesSent += clientSocket.send(data.encode()[bytesSent:])
 
         #recieve response from server
-        newSentence = clientSocket.recv(1024)
+        dataPort = clientSocket.recv(1024)
 
-    print(newSentence.decode())
+    print("Data port connection at: ", dataPort.decode())
 
 keep_open = True
 while keep_open:
     #userInput = input("ftp>")
-    send_data()
+    connect_to_server()
     keep_open = False if input("Close Connection? y or n: ") == 'y' else True
 
 clientSocket.close()

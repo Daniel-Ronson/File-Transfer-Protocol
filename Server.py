@@ -24,6 +24,16 @@ print("The server is ready to recieve on port number: " + str(serverPort) )
 #the buffer to store the recieved data
 data = ""
 
+
+def generate_ephemeral_port():
+    dataPort = socket(AF_INET, SOCK_STREAM)
+    dataPort.bind(('',0))
+    return dataPort
+
+class Datagram:
+    def __init__(self,message):
+        self.message = message
+
 #forever accept incoming connections
 while 1:
     connectionSocket, addr = serverSocket.accept()
@@ -41,7 +51,16 @@ while 1:
         data += tmpBuff
         print(data)
 
+        #process message to send back to client
         data = data.replace("client","server")
-        connectionSocket.send(data.encode())
+        obj = Datagram(data.encode())
+        data = ""
+
+        #generate ephemeral port
+        dataPort = generate_ephemeral_port()
+        print("I chose ephemeral port: ", dataPort.getsockname()[1])
+        dataPort_str = str(dataPort.getsockname()[1])
+        connectionSocket.send(dataPort_str.encode())
+
 
 connectionSocket.close()
