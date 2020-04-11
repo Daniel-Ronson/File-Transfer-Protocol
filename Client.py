@@ -1,5 +1,7 @@
 from socket import *
 import sys
+import json
+
 #user supplied values, command line arguments
 try:
     serverName = sys.argv[1]
@@ -23,9 +25,10 @@ def connect_to_server():
         bytesSent += clientSocket.send(data.encode()[bytesSent:])
 
         #recieve response from server
-        dataPort = clientSocket.recv(1024)
-
-    print("Data port connection at: ", dataPort.decode())
+        dataGramBytes = clientSocket.recv(1024)
+        dataGram = dataGramBytes.decode()
+        dataGram = json.loads(dataGram)
+    print("Data port connection at: " + dataGram['socketNumber'] + " " + dataGram['status'])
 
 keep_open = True
 while keep_open:
