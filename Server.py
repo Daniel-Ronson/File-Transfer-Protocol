@@ -1,6 +1,7 @@
 #server code
 from socket import *
 import sys
+import json
 
 #user supplied values, command line arguments
 try:
@@ -53,14 +54,15 @@ while 1:
 
         #process message to send back to client
         data = data.replace("client","server")
-        obj = Datagram(data.encode())
-        data = ""
 
         #generate ephemeral port
         dataPort = generate_ephemeral_port()
         print("I chose ephemeral port: ", dataPort.getsockname()[1])
         dataPort_str = str(dataPort.getsockname()[1])
-        connectionSocket.send(dataPort_str.encode())
+        dataGram = {'message':data,'socketNumber':dataPort_str,'status':'200 OK'}
+        dataGram = json.dumps(dataGram)
+        connectionSocket.send(dataGram.encode())
+        data = ""
 
 
 connectionSocket.close()
