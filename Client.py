@@ -1,7 +1,7 @@
 from socket import *
+from random import randint
+from random import seed
 import sys
-import json
-
 #user supplied values, command line arguments
 try:
     serverName = sys.argv[1]
@@ -10,30 +10,49 @@ try:
 #default values
 except:
     serverName = "localhost"
-    serverPort = 12000
+    serverPort = 21
 
-clientSocket = socket(AF_INET,SOCK_STREAM)
+controlSocket = socket(AF_INET,SOCK_STREAM)
 
-clientSocket.connect((serverName,serverPort))
+#Connect to Server, assumed Server is listening
+controlSocket.connect((serverName,serverPort))
 
-data = 'connected from client'
+#client sends a unique value to authenticate
+#this value is also a session id
+#convert random int to string
+seed(1)
+userToken = str(randint(1,1000))
 
+dataPort = 0;
 def connect_to_server():
     bytesSent = 0
-    while bytesSent != len(data):
+    while bytesSent != len(userToken):
 
-        bytesSent += clientSocket.send(data.encode()[bytesSent:])
+        bytesSent += controlSocket.send(userToken.encode()[bytesSent:])
 
         #recieve response from server
-        dataGramBytes = clientSocket.recv(1024)
-        dataGram = dataGramBytes.decode()
-        dataGram = json.loads(dataGram)
-    print("Data port connection at: " + dataGram['socketNumber'] + " " + dataGram['status'])
+        dataPort = controlSocket.recv(1024)
+
+    print("Data port connection at: ", dataPort.decode())
+
+#-----main-------------------
+
+#establish connection
+connect_to_server();
 
 keep_open = True
 while keep_open:
-    #userInput = input("ftp>")
-    connect_to_server()
-    keep_open = False if input("Close Connection? y or n: ") == 'y' else True
+    userInput = input("ftp>")
+    if userInput == 'quit':
+        keep_open = False
+        break;
+    if userInput== 'get':
+        break;
+        # dataSocket = socket(AF_INET, SOCK_STREAM)
+        # dataSocket.connect((serverName, dataPort))
+        # filename = 'myFile'
+        # dataSocket.send(filename.encode())
+        # statusCode = dataSocket.recv(1024);
+        # print(statusCode)
 
-clientSocket.close()
+controlSocket.close()

@@ -1,7 +1,6 @@
 #server code
 from socket import *
 import sys
-import json
 
 #user supplied values, command line arguments
 try:
@@ -10,7 +9,7 @@ try:
 
 #default port number
 except:
-    serverPort = 12000
+    serverPort = 21
 
 #create a TCP socket
 serverSocket = socket(AF_INET,SOCK_STREAM)
@@ -25,6 +24,8 @@ print("The server is ready to recieve on port number: " + str(serverPort) )
 #the buffer to store the recieved data
 data = ""
 
+#store user access token and associated port number
+userPort= {}
 
 def generate_ephemeral_port():
     dataPort = socket(AF_INET, SOCK_STREAM)
@@ -36,6 +37,7 @@ class Datagram:
         self.message = message
 
 #forever accept incoming connections
+#Establish Control Connection
 while 1:
     connectionSocket, addr = serverSocket.accept()
 
@@ -48,21 +50,25 @@ while 1:
         if not tmpBuff:
             break
 
-        #save data
+        #save cleint data, expecting a unique token
         data += tmpBuff
-        print(data)
+        #print out what the client sent
+        print('client token: ' + data)
 
         #process message to send back to client
         data = data.replace("client","server")
+        obj = Datagram(data.encode())
+        data = ""
 
         #generate ephemeral port
         dataPort = generate_ephemeral_port()
-        print("I chose ephemeral port: ", dataPort.getsockname()[1])
         dataPort_str = str(dataPort.getsockname()[1])
-        dataGram = {'message':data,'socketNumber':dataPort_str,'status':'200 OK'}
-        dataGram = json.dumps(dataGram)
-        connectionSocket.send(dataGram.encode())
-        data = ""
+
+        #store client token
+        userPort[data] = dataPort_str;
+
+        print("Server chose ephemeral port: ", dataPort_str)
+        connectionSocket.send(dataPort_str.encode())
 
 
 connectionSocket.close()
