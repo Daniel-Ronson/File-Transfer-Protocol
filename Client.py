@@ -1,6 +1,7 @@
 from socket import *
 from random import randint
 from random import seed
+
 import sys
 #user supplied values, command line arguments
 try:
@@ -24,35 +25,47 @@ seed(1)
 userToken = str(randint(1,1000))
 
 dataPort = 0;
-def connect_to_server():
+def establish_control_connection():
     bytesSent = 0
     while bytesSent != len(userToken):
 
         bytesSent += controlSocket.send(userToken.encode()[bytesSent:])
 
         #recieve response from server
-        dataPort = controlSocket.recv(1024)
+        dataSize = bytes()
+        dataPort = controlSocket.recv(1024).decode()
 
-    print("Data port connection at: ", dataPort.decode())
+    print("Establishing Control Connection: ", dataPort)
 
+
+def list_files():
+    # send 'ls' to the server
+    controlSocket.send(userInput.encode())
+
+    # server responds with the new data port
+    dataPort = int(controlSocket.recv(1024).decode())
+
+    # Connect to Data Socket on server
+    dataSocket = socket(AF_INET, SOCK_STREAM)
+    dataSocket.connect((serverName, dataPort))
+
+    # wait for server to send requested list of files
+    msg = dataSocket.recv(1024).decode()
+    print(msg)
+    dataSocket.close()
 #-----main-------------------
 
 #establish connection
-connect_to_server();
+establish_control_connection();
 
 keep_open = True
 while keep_open:
     userInput = input("ftp>")
     if userInput == 'quit':
         keep_open = False
+    elif userInput== 'get':
         break;
-    if userInput== 'get':
-        break;
-        # dataSocket = socket(AF_INET, SOCK_STREAM)
-        # dataSocket.connect((serverName, dataPort))
-        # filename = 'myFile'
-        # dataSocket.send(filename.encode())
-        # statusCode = dataSocket.recv(1024);
-        # print(statusCode)
+    elif userInput == 'ls':
+        list_files()
 
 controlSocket.close()

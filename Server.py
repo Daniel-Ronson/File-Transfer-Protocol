@@ -1,6 +1,7 @@
 #server code
 from socket import *
 import sys
+from os import listdir
 
 #user supplied values, command line arguments
 try:
@@ -27,48 +28,58 @@ data = ""
 #store user access token and associated port number
 userPort= {}
 
-def generate_ephemeral_port():
-    dataPort = socket(AF_INET, SOCK_STREAM)
-    dataPort.bind(('',0))
-    return dataPort
+#Generate and open data connection
+def generate_ephemeral_port(connectionSocket):
+    dataSocket = socket(AF_INET, SOCK_STREAM)
+    dataSocket.bind(('',0))
 
-class Datagram:
-    def __init__(self,message):
-        self.message = message
+    # Send Data port number back to client
+    dataPort = str(dataSocket.getsockname()[1])
+    connectionSocket.send(dataPort.encode())
+    print("Server chose ephemeral port: ", dataPort)
+
+    # store client token
+    userPort[data] = dataPort;
+
+    dataSocket.listen(1);
+    dataConnection, addr = dataSocket.accept()
+    return dataConnection
+
+def list_files():
+   # connectionSocket, addr = dataPort.accept()
+    fileList = listdir('./userFiles')
+    files= " "
+    return files.join(fileList)
+
+def send_data(socket,data):
+    socket.send(data.encode())
+
+
+#Establish Control Connection
+connectionSocket, addr = serverSocket.accept()
+data = connectionSocket.recv(1024).decode()
+print('client token: ' + data)
+status = '200OK'
+send_data(connectionSocket,status)
 
 #forever accept incoming connections
-#Establish Control Connection
 while 1:
-    connectionSocket, addr = serverSocket.accept()
-
-    #temporary buffer
-    tmpBuff=""
-    while len(data) != 1024:
-        #receive whatever the newly connected client has to send
-        tmpBuff = connectionSocket.recv(1024).decode()
-        # The other side unexpectedly closed it's socket
-        if not tmpBuff:
-            break
-
-        #save cleint data, expecting a unique token
-        data += tmpBuff
-        #print out what the client sent
-        print('client token: ' + data)
-
-        #process message to send back to client
-        data = data.replace("client","server")
-        obj = Datagram(data.encode())
-        data = ""
-
-        #generate ephemeral port
-        dataPort = generate_ephemeral_port()
-        dataPort_str = str(dataPort.getsockname()[1])
-
-        #store client token
-        userPort[data] = dataPort_str;
-
-        print("Server chose ephemeral port: ", dataPort_str)
-        connectionSocket.send(dataPort_str.encode())
+    msg = connectionSocket.recv(1024).decode()
+    if msg == 'ls':
+        print('Listing all files')
+        dataConnection = generate_ephemeral_port(connectionSocket)
+        files = list_files()
+        dataConnection.send(files.encode())
+        dataConnection.close()
 
 
 connectionSocket.close()
+
+
+# class Datagram:
+#     def __init__(self,message):
+#         self.message = message
+## process message to send back to client
+# data = data.replace("client","server")
+# obj = Datagram(data.encode())
+# data = ""
