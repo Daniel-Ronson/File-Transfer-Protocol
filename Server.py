@@ -113,6 +113,48 @@ while 1:
         fileData = recFile(dataConnection, fileSize)
         mkFile(cmd[1], fileData)
         break
+    elif cmd[0] == 'get':
+        print('Sending files')
+        dataConnection = generate_ephemeral_port(connectionSocket)
+
+        fileNameSize = recvAll(newSock, 10)
+        fileName = recvAll(newSock, int(fileNameSize))
+        # print('file name : ' + fileName + '\n')
+
+        fileObj = open(fileName, "r")
+
+        # Read 65536 bytes of data
+        fileData = fileObj.read(65536)
+
+        # Make sure we did not hit EOF
+        if fileData:
+
+		    # Get the size of the data read
+		    # and convert it to string
+            dataSizeStr = str(len(fileData))
+
+		    # Prepend 0's to the size string
+		    # until the size is 10 bytes
+            while len(dataSizeStr) < 10:
+                dataSizeStr = "0" + dataSizeStr
+
+		    # Prepend the size of the data to the
+		    # file data.
+            fileData = dataSizeStr + fileData	
+
+		    # number of bytes sent
+            numSent = 0		
+
+		    # send file
+            while len(fileData) > numSent:
+                numSent += newSock.send(fileData[numSent:])
+
+	    # The file has been read. We are done
+        else:
+            print('FAILURE')
+            fileObj.close()
+            newSock.close()
+            exit()		
 
 connectionSocket.close()
 

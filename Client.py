@@ -61,7 +61,6 @@ def getFileInfo(filename):
     testCase()
     return fileData
 
-
 def list_files():
     # send 'ls' to the server
     controlSocket.send(userInput.encode())
@@ -74,8 +73,7 @@ def list_files():
     msg = dataSocket.recv(1024).decode()
     print(msg)
 
-    dataSocket.close()
-
+    dataSocket.close()    
 
 # -----main-------------------
 
@@ -89,7 +87,42 @@ while keep_open:
     if user[0] == 'quit':
         keep_open = False
     elif user[0] == 'get':
-        break
+        # send 'get' to the server
+        controlSocket.send(userInput.encode())
+
+        # server responds with the new data port
+        newPort = int(controlSocket.recv(1024).decode())
+
+        # Connect to Data Socket on server
+        newSock = socket(AF_INET, SOCK_STREAM)
+        newSock.connect((serverName, newPort))
+
+        # Receiving requested file
+
+        fileData = ""
+	    # The temporary buffer to store the received data.
+        recvBuff = ""
+	    # The size of the incoming file
+        fileSize = 0	
+	    # The buffer containing the file size
+        fileSizeBuff = ""
+
+	    # Receive the first 10 bytes indicating the size of the file
+        fileSizeBuff = recvAll(newSock, 10)
+
+	    # Get the file size
+        fileSize = int(fileSizeBuff)
+
+	    # Get the file data
+        fileData = recvAll(newSock, fileSize)
+        with open(fileName,'w') as f:
+            f.write(fileData)
+
+
+        print("The file name is ", fileName)
+        print("The file size is " , str(fileSize).lstrip('0'))
+        newSock.close()
+
     elif user[0] == 'put':
         filename = user[1]
         # print(filename)
