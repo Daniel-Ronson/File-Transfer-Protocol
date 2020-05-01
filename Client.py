@@ -31,7 +31,6 @@ dataPort = 0
 def testCase():
     print("works")
 
-
 def establish_control_connection():
     global dataPort
     bytesSent = 0
@@ -60,6 +59,26 @@ def getFileInfo(filename):
     fileData = filesize + fileData
     testCase()
     return fileData
+
+def recFile(sock, bytes):
+    recBuff = ""
+    tmpBuff = ""
+    # print(bytes)
+    while len(recBuff) < bytes:
+        tmpBuff = sock.recv(bytes)
+        # print(tmpBuff)
+        if not tmpBuff:
+            break
+        recBuff += tmpBuff.decode()
+        # print(recBuff)
+
+    return recBuff
+
+def mkFile(filename, fileData):
+    newPath = "C:/Users/abidb/Documents/File-Transfer-Protocol/File-Transfer-Protocol/userFiles/" + cmd[1]
+    f = open(newPath, "w+")
+    f.write(fileData)
+    f.close()
 
 def list_files():
     # send 'ls' to the server
@@ -99,28 +118,13 @@ while keep_open:
 
         # Receiving requested file
 
-        fileData = ""
-	    # The temporary buffer to store the received data.
-        recvBuff = ""
-	    # The size of the incoming file
-        fileSize = 0	
-	    # The buffer containing the file size
-        fileSizeBuff = ""
-
-	    # Receive the first 10 bytes indicating the size of the file
-        fileSizeBuff = recvAll(newSock, 10)
-
-	    # Get the file size
+        print('Receiving files')
+        fileSizeBuff = recFile(newSock, 10)
+        print(fileSizeBuff)
         fileSize = int(fileSizeBuff)
+        fileData = recFile(newSock, fileSize)
+        mkFile(user[1], fileData)
 
-	    # Get the file data
-        fileData = recvAll(newSock, fileSize)
-        with open(fileName,'w') as f:
-            f.write(fileData)
-
-
-        print("The file name is ", fileName)
-        print("The file size is " , str(fileSize).lstrip('0'))
         newSock.close()
 
     elif user[0] == 'put':

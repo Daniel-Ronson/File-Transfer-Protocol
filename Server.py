@@ -30,7 +30,6 @@ data = ""
 # store user access token and associated port number
 userPort = {}
 
-
 # Generate and open data connection
 def generate_ephemeral_port(connectionSocket):
     dataSocket = socket(AF_INET, SOCK_STREAM)
@@ -69,6 +68,22 @@ def recFile(sock, bytes):
         # print(recBuff)
 
     return recBuff
+
+def getFileInfo(filename):
+    fileObj = open(filename, "r")
+    fileData = fileObj.read(65536)
+    filesize = 0
+    testCase()
+    if fileData:
+        filesize = str(len(fileData))
+        while len(filesize) < 10:
+            filesize = "0" + filesize
+            print(filesize + " the file size")
+            testCase()
+
+    fileData = filesize + fileData
+    testCase()
+    return fileData
 
 
 def list_files():
@@ -117,44 +132,20 @@ while 1:
         print('Sending files')
         dataConnection = generate_ephemeral_port(connectionSocket)
 
-        fileNameSize = recvAll(newSock, 10)
-        fileName = recvAll(newSock, int(fileNameSize))
-        # print('file name : ' + fileName + '\n')
+        fileNameSize = recvFile(dataConnection, 10)
+        fileSize = int(fileNameSize)
+        fileName = recvFile(dataConnection, fileSize)
 
-        fileObj = open(fileName, "r")
+        fileData = getFileInfo(fileName)
 
-        # Read 65536 bytes of data
-        fileData = fileObj.read(65536)
+		# number of bytes sent
+        numSent = 0		
 
-        # Make sure we did not hit EOF
-        if fileData:
+		# send file
+        while len(fileData) > numSent:
+            numSent += dataConnection.send(fileData[numSent:].encode())
 
-		    # Get the size of the data read
-		    # and convert it to string
-            dataSizeStr = str(len(fileData))
-
-		    # Prepend 0's to the size string
-		    # until the size is 10 bytes
-            while len(dataSizeStr) < 10:
-                dataSizeStr = "0" + dataSizeStr
-
-		    # Prepend the size of the data to the
-		    # file data.
-            fileData = dataSizeStr + fileData	
-
-		    # number of bytes sent
-            numSent = 0		
-
-		    # send file
-            while len(fileData) > numSent:
-                numSent += newSock.send(fileData[numSent:])
-
-	    # The file has been read. We are done
-        else:
-            print('FAILURE')
-            fileObj.close()
-            newSock.close()
-            exit()		
+	    
 
 connectionSocket.close()
 
