@@ -1,7 +1,7 @@
 from socket import *
 from random import randint
 from random import seed
-
+import os
 import sys
 
 # user supplied values, command line arguments
@@ -45,19 +45,16 @@ def establish_control_connection():
 
 
 def getFileInfo(filename):
-    fileObj = open(filename, "r")
+    path = './localStorage/' + filename
+    fileObj = open(path)
     fileData = fileObj.read(65536)
     filesize = 0
-    testCase()
     if fileData:
         filesize = str(len(fileData))
         while len(filesize) < 10:
             filesize = "0" + filesize
-            print(filesize + " the file size")
-            testCase()
 
     fileData = filesize + fileData
-    testCase()
     return fileData
 
 def recFile(sock, bytes):
@@ -75,9 +72,10 @@ def recFile(sock, bytes):
     return recBuff
 
 def mkFile(filename, fileData):
-    newPath = "C:/Users/abidb/Documents/File-Transfer-Protocol/File-Transfer-Protocol/userFiles/" + cmd[1]
+    newPath = "./localStorage/" + filename
     f = open(newPath, "w+")
     f.write(fileData)
+    os.fsync(f.fileno())
     f.close()
 
 def list_files():
@@ -106,39 +104,43 @@ while keep_open:
     if user[0] == 'quit':
         keep_open = False
     elif user[0] == 'get':
-        # send 'get' to the server
+        filename = user[1]
+
+        # send 'get' and file name to the server
         controlSocket.send(userInput.encode())
 
         # server responds with the new data port
-        newPort = int(controlSocket.recv(1024).decode())
+        dataPort = int(controlSocket.recv(1024).decode())
 
         # Connect to Data Socket on server
-        newSock = socket(AF_INET, SOCK_STREAM)
-        newSock.connect((serverName, newPort))
+        dataSocket = socket(AF_INET, SOCK_STREAM)
+        dataSocket.connect((serverName, dataPort))
 
-        # Receiving requested file
-
-        print('Receiving files')
-        fileSizeBuff = recFile(newSock, 10)
-        print(fileSizeBuff)
+        # Receiving requested file's size
+        fileSizeBuff = recFile(dataSocket, 10)
         fileSize = int(fileSizeBuff)
-        fileData = recFile(newSock, fileSize)
-        mkFile(user[1], fileData)
 
-        newSock.close()
+        #receive file
+        fileData = recFile(dataSocket, fileSize)
+
+        #save file in local storage
+        mkFile(filename, fileData)
+
+        dataSocket.close()
 
     elif user[0] == 'put':
         filename = user[1]
         # print(filename)
         fileinfo = getFileInfo(filename)
         controlSocket.send(userInput.encode())
-        newPort = int(controlSocket.recv(1024).decode())
-        newSock = socket(AF_INET, SOCK_STREAM)
-        newSock.connect((serverName, newPort))
+        dataPort = int(controlSocket.recv(1024).decode())
+        dataSocket = socket(AF_INET, SOCK_STREAM)
+        dataSocket.connect((serverName, dataPort))
         # print(fileinfo + "The file info")
         numBytes = 0
         while len(fileinfo) > numBytes:
-            numBytes += newSock.send(fileinfo[numBytes].encode())
+            numBytes += dataSocket.send(fileinfo[numBytes].encode())
+        dataSocket.close()
 
     elif user[0] == 'ls':
         list_files()

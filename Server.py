@@ -49,9 +49,10 @@ def generate_ephemeral_port(connectionSocket):
 
 
 def mkFile(filename, fileData):
-    newPath = "C:/Users/abidb/Documents/File-Transfer-Protocol/File-Transfer-Protocol/userFiles/" + cmd[1]
+    newPath = "./serverStorage/" + cmd[1]
     f = open(newPath, "w+")
     f.write(fileData)
+    f.flush()
     f.close()
 
 
@@ -70,25 +71,22 @@ def recFile(sock, bytes):
     return recBuff
 
 def getFileInfo(filename):
-    fileObj = open(filename, "r")
+    path = './serverStorage/' + filename
+    fileObj = open(path)
     fileData = fileObj.read(65536)
     filesize = 0
-    testCase()
     if fileData:
         filesize = str(len(fileData))
         while len(filesize) < 10:
             filesize = "0" + filesize
-            print(filesize + " the file size")
-            testCase()
+            #print(filesize + " the file size")
 
     fileData = filesize + fileData
-    testCase()
     return fileData
 
 
 def list_files():
-    # connectionSocket, addr = dataPort.accept()
-    fileList = listdir('./userFiles')
+    fileList = listdir('./serverStorage')
     files = " "
     return files.join(fileList)
 
@@ -127,24 +125,21 @@ while 1:
         fileSize = int(fileSizeBuff)
         fileData = recFile(dataConnection, fileSize)
         mkFile(cmd[1], fileData)
-        break
+        dataConnection.close()
+
     elif cmd[0] == 'get':
+        fileName = cmd[1]
         print('Sending files')
         dataConnection = generate_ephemeral_port(connectionSocket)
-
-        fileNameSize = recvFile(dataConnection, 10)
-        fileSize = int(fileNameSize)
-        fileName = recvFile(dataConnection, fileSize)
-
         fileData = getFileInfo(fileName)
-
+        print('getting file data')
 		# number of bytes sent
         numSent = 0		
 
 		# send file
         while len(fileData) > numSent:
             numSent += dataConnection.send(fileData[numSent:].encode())
-
+        dataConnection.close()
 	    
 
 connectionSocket.close()
