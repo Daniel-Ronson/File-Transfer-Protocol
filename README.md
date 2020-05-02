@@ -25,3 +25,7 @@
  4. Server receives file, notifies client with 200OK
  5. Server closes connection.
  - POST datagram contains file contentts, post header, and user token
+ 
+ ##Storage
+ - The client has access to local storage, this folder is used to upload files with the post method
+ - The server has access to server storage, this folder is used to get files and list files
