@@ -136,7 +136,6 @@ while 1:
         dataConnection.send(files.encode())
         dataConnection.close()
         status = '200OK'
-        print_status(status)
     elif cmd[0] == 'put':
         print('Receiving files...')
         dataConnection = generate_ephemeral_port(connectionSocket)
@@ -147,7 +146,6 @@ while 1:
         mkFile(cmd[1], fileData)
         dataConnection.close()
         status = '200OK'
-        print_status(status)
     elif cmd[0] == 'get':
         fileName = cmd[1]
         print('Sending files...')
@@ -166,7 +164,7 @@ while 1:
                 print_status(status)
         dataConnection.close()        
         status = '200OK'
-        print_status(status)
+    print_status(status)
 	
 
 connectionSocket.close()
