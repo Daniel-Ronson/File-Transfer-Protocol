@@ -7,7 +7,7 @@ import sys
 # user supplied values, command line arguments
 try:
     serverName = sys.argv[1]
-    serverPort = sys.argv[2]
+    serverPort = int(sys.argv[2])
 
 # default values
 except:
@@ -99,7 +99,7 @@ establish_control_connection();
 
 keep_open = True
 while keep_open:
-    userInput = input("ftp> ")
+    userInput = raw_input("ftp> ")
     user = userInput.split(" ")
     if user[0] == 'quit':
         keep_open = False
@@ -127,6 +127,8 @@ while keep_open:
         mkFile(filename, fileData)
 
         dataSocket.close()
+
+        print("Filename: ", filename, "Bytes Transferred: ", fileSize)
 
     elif user[0] == 'put':
         filename = user[1]

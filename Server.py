@@ -8,7 +8,7 @@ from os import listdir, path
 # user supplied values, command line arguments
 try:
     # the port on which to listen
-    serverPort = sys.argv[1]
+    serverPort = int(sys.argv[1])
 
 # default port number
 except:
@@ -32,20 +32,24 @@ userPort = {}
 
 # Generate and open data connection
 def generate_ephemeral_port(connectionSocket):
-    dataSocket = socket(AF_INET, SOCK_STREAM)
-    dataSocket.bind(('', 0))
+    try:
+        dataSocket = socket(AF_INET, SOCK_STREAM)
+        dataSocket.bind(('', 0))
 
-    # Send Data port number back to client
-    dataPort = str(dataSocket.getsockname()[1])
-    connectionSocket.send(dataPort.encode())
-    print("Server chose ephemeral port: ", dataPort)
+        # Send Data port number back to client
+        dataPort = str(dataSocket.getsockname()[1])
+        connectionSocket.send(dataPort.encode())
+        # print("Server chose ephemeral port: ", dataPort)
 
-    # store client token
-    userPort[data] = dataPort;
+        # store client token
+        userPort[data] = dataPort;
 
-    dataSocket.listen(1);
-    dataConnection, addr = dataSocket.accept()
-    return dataConnection
+        dataSocket.listen(1);
+        dataConnection, addr = dataSocket.accept()
+        return dataConnection
+    except:
+        status = "500InternalServerError"
+        print_status(status)
 
 
 def mkFile(filename, fileData):
@@ -71,24 +75,32 @@ def recFile(sock, bytes):
     return recBuff
 
 def getFileInfo(filename):
-    path = './serverStorage/' + filename
-    fileObj = open(path)
-    fileData = fileObj.read(65536)
-    filesize = 0
-    if fileData:
-        filesize = str(len(fileData))
-        while len(filesize) < 10:
-            filesize = "0" + filesize
-            #print(filesize + " the file size")
+    try:
+        path = './serverStorage/' + filename
+        fileObj = open(path)
+        fileData = fileObj.read(65536)
+        filesize = 0
+        if fileData:
+            filesize = str(len(fileData))
+            while len(filesize) < 10:
+                filesize = "0" + filesize
+                #print(filesize + " the file size")
 
-    fileData = filesize + fileData
-    return fileData
+        fileData = filesize + fileData
+        return fileData
+    except:
+        status = "500InternalServerError"
+        print_status(status)
 
 
 def list_files():
-    fileList = listdir('./serverStorage')
-    files = " "
-    return files.join(fileList)
+    try:
+        fileList = listdir('./serverStorage')
+        files = " "
+        return files.join(fileList)
+    except:
+        status = "500InternalServerError"
+        print_status(status)
 
 
 def send_data(socket, data):
@@ -98,49 +110,64 @@ def send_data(socket, data):
 def testcase():
     print("works")
 
+def print_status(status):
+    if status=='200OK':
+        print("SUCCESS. \n");
+    else:
+        print("FAILURE. \n");
+
 
 # Establish Control Connection
 connectionSocket, addr = serverSocket.accept()
 data = connectionSocket.recv(1024).decode()
-print('client token: ' + data)
+# print('client token: ' + data)
 status = '200OK'
-send_data(connectionSocket, status)
+print_status(status);
+send_data(connectionSocket, data)
 
 # forever accept incoming connections
 while 1:
     msg = connectionSocket.recv(1024).decode()
     cmd = msg.split(" ")
     if cmd[0] == 'ls':
-        print('Listing all files')
+        print('Listing all files...')
         dataConnection = generate_ephemeral_port(connectionSocket)
         files = list_files()
         dataConnection.send(files.encode())
         dataConnection.close()
-        testcase()
+        status = '200OK'
+        print_status(status)
     elif cmd[0] == 'put':
-        print('Receiving files')
+        print('Receiving files...')
         dataConnection = generate_ephemeral_port(connectionSocket)
         fileSizeBuff = recFile(dataConnection, 10)
-        print(fileSizeBuff)
+        # print(fileSizeBuff)
         fileSize = int(fileSizeBuff)
         fileData = recFile(dataConnection, fileSize)
         mkFile(cmd[1], fileData)
         dataConnection.close()
-
+        status = '200OK'
+        print_status(status)
     elif cmd[0] == 'get':
         fileName = cmd[1]
-        print('Sending files')
+        print('Sending files...')
         dataConnection = generate_ephemeral_port(connectionSocket)
         fileData = getFileInfo(fileName)
-        print('getting file data')
+        print('Getting file data...')
 		# number of bytes sent
         numSent = 0		
 
 		# send file
         while len(fileData) > numSent:
-            numSent += dataConnection.send(fileData[numSent:].encode())
-        dataConnection.close()
-	    
+            try:
+                numSent += dataConnection.send(fileData[numSent:].encode())
+            except:
+                status = '500InternalServerError'
+                print_status(status)
+        dataConnection.close()        
+        status = '200OK'
+        print_status(status)
+	
 
 connectionSocket.close()
 

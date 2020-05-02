@@ -1,3 +1,11 @@
+## Team Members
+  - Abid Bakityar: abidbakhtiyar@gmail.com
+  - Stephen Lee: stephenjonglee@yahoo.com
+  - Giuliana Pham: gpham@csu.fullerton.edu
+  - Daniel Ronson: dronson@csu.fullerton.edu
+
+## Language Used: python
+
 ## How to Run
   ###python Server.py <Server-Port>
   ###python Client.py <Server-IP> <Server-Port>
