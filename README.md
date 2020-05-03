@@ -1,5 +1,5 @@
 ## Team Members
-  - Abid Bakityar: abidbakhtiyar@gmail.com
+  - Abid Bakityar: abidbakhtiyar@csu.fullerton.edu
   - Stephen Lee: stephenjonglee@yahoo.com
   - Giuliana Pham: gpham@csu.fullerton.edu
   - Daniel Ronson: dronson@csu.fullerton.edu
