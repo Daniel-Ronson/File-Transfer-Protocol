@@ -7,10 +7,10 @@
 ## Language Used: python
 
 ## How to Run
-  ###python Server.py <Server-Port>
-  ###python Client.py <Server-IP> <Server-Port>
-  Client will be prompted with ftp> and may input one command
-  ###ftp> get | post | ls | quit
+`python Server.py <Server-Port>`
+`python Client.py <Server-IP> <Server-Port>`
+  - Client will be prompted with ftp> and may input one command
+`ftp> get | post | ls | quit`
 
 ## FTP Specification
  - Parallel control and data connections
