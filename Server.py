@@ -16,7 +16,7 @@ def Error(status_code):
 # user supplied values, command line arguments
 try:
     # the port on which to listen
-    serverPort = sys.argv[1]
+    serverPort = int(sys.argv[1])
 
 # default port number
 except:

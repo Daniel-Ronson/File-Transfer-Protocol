@@ -8,7 +8,7 @@ import json
 # user supplied values, command line arguments
 try:
     serverName = sys.argv[1]
-    serverPort = sys.argv[2]
+    serverPort = int(sys.argv[2])
 
 # default values
 except:
