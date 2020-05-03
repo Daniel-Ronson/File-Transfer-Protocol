@@ -3,11 +3,12 @@ from random import randint
 from random import seed
 import os
 import sys
+import json
 
 # user supplied values, command line arguments
 try:
     serverName = sys.argv[1]
-    serverPort = int(sys.argv[2])
+    serverPort = sys.argv[2]
 
 # default values
 except:
@@ -45,17 +46,21 @@ def establish_control_connection():
 
 
 def getFileInfo(filename):
-    path = './localStorage/' + filename
-    fileObj = open(path)
-    fileData = fileObj.read(65536)
-    filesize = 0
-    if fileData:
-        filesize = str(len(fileData))
-        while len(filesize) < 10:
-            filesize = "0" + filesize
+    try:
+        path = './localStorage/' + filename
+        fileSize = os.path.getsize(path)
+        fileObj = open(path)
+        fileData = fileObj.read(fileSize)
+        filesize = 0
+        if fileData:
+            filesize = str(len(fileData))
+            while len(filesize) < 10:
+                filesize = "0" + filesize
 
-    fileData = filesize + fileData
-    return fileData
+        fileData = filesize + fileData
+        return fileData
+    except:
+        return -1
 
 def recFile(sock, bytes):
     recBuff = ""
@@ -78,7 +83,7 @@ def mkFile(filename, fileData):
     os.fsync(f.fileno())
     f.close()
 
-def list_files():
+def get_list_files():
     # send 'ls' to the server
     controlSocket.send(userInput.encode())
     # server responds with the new data port
@@ -87,10 +92,9 @@ def list_files():
     dataSocket = socket(AF_INET, SOCK_STREAM)
     dataSocket.connect((serverName, dataPort))
     # wait for server to send requested list of files
-    msg = dataSocket.recv(1024).decode()
-    print(msg)
-
-    dataSocket.close()    
+    list_of_files = dataSocket.recv(1024).decode()
+    dataSocket.close()
+    return list_of_files
 
 # -----main-------------------
 
@@ -98,8 +102,9 @@ def list_files():
 establish_control_connection();
 
 keep_open = True
+status = ''
 while keep_open:
-    userInput = raw_input("ftp> ")
+    userInput = input("ftp> ")
     user = userInput.split(" ")
     if user[0] == 'quit':
         keep_open = False
@@ -117,34 +122,44 @@ while keep_open:
         dataSocket.connect((serverName, dataPort))
 
         # Receiving requested file's size
-        fileSizeBuff = recFile(dataSocket, 10)
+        fileSizeBuff = recFile(dataSocket,10)
         fileSize = int(fileSizeBuff)
 
-        #receive file
-        fileData = recFile(dataSocket, fileSize)
+        # -1 indicates the file does not exist
+        if fileSize != -1:
+            #receive file
+            fileData = recFile(dataSocket, fileSize)
 
-        #save file in local storage
-        mkFile(filename, fileData)
-
+            #save file in local storage
+            mkFile(filename, fileData)
+            status = '200OK'
+        else:
+            status_json = controlSocket.recv(1024).decode()
+            status = json.loads(status_json)['status_code']
         dataSocket.close()
-
-        print("Filename: ", filename, "Bytes Transferred: ", fileSize)
 
     elif user[0] == 'put':
         filename = user[1]
         # print(filename)
         fileinfo = getFileInfo(filename)
-        controlSocket.send(userInput.encode())
-        dataPort = int(controlSocket.recv(1024).decode())
-        dataSocket = socket(AF_INET, SOCK_STREAM)
-        dataSocket.connect((serverName, dataPort))
-        # print(fileinfo + "The file info")
-        numBytes = 0
-        while len(fileinfo) > numBytes:
-            numBytes += dataSocket.send(fileinfo[numBytes].encode())
-        dataSocket.close()
+        if(fileinfo == -1):
+            print("cannot find file \'{}\'".format(filename))
+        else:
+            controlSocket.send(userInput.encode())
+            dataPort = int(controlSocket.recv(1024).decode())
+            dataSocket = socket(AF_INET, SOCK_STREAM)
+            dataSocket.connect((serverName, dataPort))
+            numBytes = 0
+            while len(fileinfo) > numBytes:
+                numBytes += dataSocket.send(fileinfo[numBytes].encode())
+            status = controlSocket.recv(1024).decode()
+            dataSocket.close()
 
     elif user[0] == 'ls':
-        list_files()
+        files = get_list_files()
+        print(files)
+        status = controlSocket.recv(1024).decode()
+
+    print(status)
 
 controlSocket.close()
